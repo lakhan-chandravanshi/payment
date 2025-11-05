@@ -12,76 +12,63 @@ const { emailQueue } = require('../utils/queue');
 
 const router = express.Router();
 
-// @desc    Create order from cart (checkout)
-// @route   POST /api/orders/checkout
-// @access  Private/User
+
 router.post('/checkout', authenticate, authorize('USER'), asyncHandler(async (req, res) => {
-  const session = await mongoose.startSession();
-  
-  try {
-    await session.withTransaction(async () => {
-      // Get user's cart
-      const cart = await Cart.findOne({ userId: req.user._id }).populate('items.productId');
-      if (!cart || cart.items.length === 0) {
-        throw new AppError('Cart is empty', 400);
-      }
-
-      // Calculate total amount
-      let totalAmount = 0;
-      const orderItems = [];
-
-      // Process each cart item
-      for (const cartItem of cart.items) {
-        const product = cartItem.productId;
-        
-        // Check if product still exists and has enough stock
-        if (!product) {
-          throw new AppError(`Product ${cartItem.productId} not found`, 404);
-        }
-
-        if (product.availableStock < cartItem.quantity) {
-          throw new AppError(`Insufficient stock for product ${product.name}`, 400);
-        }
-
-        // Reserve stock atomically
-        await product.reserveStock(cartItem.quantity);
-
-        // Add to order items
-        orderItems.push({
-          productId: product._id,
-          quantity: cartItem.quantity,
-          priceAtPurchase: product.price
-        });
-
-        totalAmount += product.price * cartItem.quantity;
-      }
-
-      // Create order
-      const order = await Order.create([{
-        userId: req.user._id,
-        items: orderItems,
-        totalAmount,
-        status: 'PENDING_PAYMENT'
-      }], { session });
-
-      // Clear cart
-      await cart.clearCart();
-
-      res.status(201).json({
-        success: true,
-        message: 'Order created successfully. Please complete payment within 15 minutes.',
-        data: {
-          order: order[0],
-          paymentDeadline: order[0].paymentDeadline
-        }
-      });
-    });
-  } catch (error) {
-    throw error;
-  } finally {
-    await session.endSession();
+  // Get user's cart
+  const cart = await Cart.findOne({ userId: req.user._id }).populate('items.productId');
+  if (!cart || cart.items.length === 0) {
+    throw new AppError('Cart is empty', 400);
   }
+
+  // Calculate total amount
+  let totalAmount = 0;
+  const orderItems = [];
+
+  for (const cartItem of cart.items) {
+    const product = cartItem.productId;
+
+    if (!product) {
+      throw new AppError(`Product ${cartItem.productId} not found`, 404);
+    }
+
+    if (product.availableStock < cartItem.quantity) {
+      throw new AppError(`Insufficient stock for product ${product.name}`, 400);
+    }
+
+    // Reserve stock manually
+    product.availableStock -= cartItem.quantity;
+    await product.save();
+
+    orderItems.push({
+      productId: product._id,
+      quantity: cartItem.quantity,
+      priceAtPurchase: product.price
+    });
+
+    totalAmount += product.price * cartItem.quantity;
+  }
+
+  // Create order
+  const order = await Order.create({
+    userId: req.user._id,
+    items: orderItems,
+    totalAmount,
+    status: 'PENDING_PAYMENT'
+  });
+
+  // Clear cart
+  await cart.clearCart();
+
+  res.status(201).json({
+    success: true,
+    message: 'Order created successfully. Please complete payment within 15 minutes.',
+    data: {
+      order,
+      paymentDeadline: order.paymentDeadline
+    }
+  });
 }));
+
 
 // @desc    Process payment for order
 // @route   POST /api/orders/:id/pay

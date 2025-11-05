@@ -1,0 +1,12 @@
+● mongod.service - MongoDB Database Server
+     Loaded: loaded (/lib/systemd/system/mongod.service; enabled; vendor preset: enabled)
+     Active: inactive (dead) since Wed 2025-11-05 11:53:57 IST; 4min 27s ago
+       Docs: https://docs.mongodb.org/manual
+    Process: 1014 ExecStart=/usr/bin/mongod --config /etc/mongod.conf (code=exited, status=0/SUCCESS)
+   Main PID: 1014 (code=exited, status=0/SUCCESS)
+
+Nov 05 09:24:06 lakhan-Latitude-3480 systemd[1]: Started MongoDB Database Server.
+Nov 05 09:24:09 lakhan-Latitude-3480 mongod[1014]: {"t":{"$date":"2025-11-05T03:54:09.480Z"},"s":"I",  "c":"CONTROL",  "id":7484500, "ctx":"-","msg":"Environment variable MONGODB_CONFIG_OVERRIDE_NOFORK == 1, overriding \"processManagement.fork\" to false"}
+Nov 05 11:53:57 lakhan-Latitude-3480 systemd[1]: Stopping MongoDB Database Server...
+Nov 05 11:53:57 lakhan-Latitude-3480 systemd[1]: mongod.service: Succeeded.
+Nov 05 11:53:57 lakhan-Latitude-3480 systemd[1]: Stopped MongoDB Database Server.

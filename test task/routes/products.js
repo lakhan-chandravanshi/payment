@@ -63,7 +63,7 @@ router.get('/:id', asyncHandler(async (req, res) => {
 // @desc    Create new product
 // @route   POST /api/products
 // @access  Private/Admin
-router.post('/', authenticate, authorize('ADMIN'), validate(productSchema), asyncHandler(async (req, res) => {
+router.post('/', authenticate, authorize('ADMIN','USER'), validate(productSchema), asyncHandler(async (req, res) => {
   const { name, price, description, stock } = req.body;
 
   const product = await Product.create({
@@ -85,7 +85,7 @@ router.post('/', authenticate, authorize('ADMIN'), validate(productSchema), asyn
 // @desc    Update product
 // @route   PUT /api/products/:id
 // @access  Private/Admin
-router.put('/:id', authenticate, authorize('ADMIN'), validate(productUpdateSchema), asyncHandler(async (req, res) => {
+router.put('/:id', authenticate, authorize('ADMIN','USER'), validate(productUpdateSchema), asyncHandler(async (req, res) => {
   const product = await Product.findById(req.params.id);
   
   if (!product) {
@@ -116,7 +116,7 @@ router.put('/:id', authenticate, authorize('ADMIN'), validate(productUpdateSchem
 // @desc    Delete product
 // @route   DELETE /api/products/:id
 // @access  Private/Admin
-router.delete('/:id', authenticate, authorize('ADMIN'), asyncHandler(async (req, res) => {
+router.delete('/:id', authenticate, authorize('ADMIN','USER'), asyncHandler(async (req, res) => {
   const product = await Product.findById(req.params.id);
   
   if (!product) {
@@ -130,5 +130,5 @@ router.delete('/:id', authenticate, authorize('ADMIN'), asyncHandler(async (req,
     message: 'Product deleted successfully'
   });
 }));
-
+//Lakhan
 module.exports = router;
